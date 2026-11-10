@@ -3,6 +3,8 @@
 All user-visible changes. Newest first; one section per released version.
 
 ## Unreleased
+
+## 0.1.0 — 2026-11-10
 - Accounts with their own on/off switch, remotes, folders, HTTPS sign-in name and SSH key.
 - Every repository commits as the account that owns its remote or folder.
 - Guard: refuses commits and pushes that cross accounts, in every client and terminal; your

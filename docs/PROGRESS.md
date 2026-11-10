@@ -1,7 +1,7 @@
 # SwitchGit — Progress
 
 ## Status
-- Current phase: P1 — Accounts, guard, clients, scan, CLI (done; not released)
+- Current phase: P1 — Accounts, guard, clients, scan, CLI (done; released as 0.1.0 on 2026-11-10)
 - Last session: 2026-11-10 — app created from templates/tauri-app; sample module replaced by the four
   tabs; core, commands, CLI and tests written; guard tried end to end with real git in an isolated
   global config (identity by remote and folder, refused commit / push, bypass, hand-over to a
@@ -37,4 +37,4 @@
 - After an app update moves the exe, hooks point at the old path until Apply (a missing exe never
   blocks git).
 - The app icon is still the template placeholder.
-- Local Abyss clone: `catalog/catalog.json` has SwitchGit as `coming_soon` (revision 6), uncommitted.
+- Abyss catalog: SwitchGit is `available` since revision 6 (pushed 2026-11-10).
