@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@abyss/ui/theme.css";
+
+/* SwitchGit's accent; every component of @abyss/ui follows it. */
+@theme {
+  --color-accent: #f97316;
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+target/
+src-tauri/gen/
+*.log
+.DS_Store
+release/
+# Updater signing keys never go in the repo (they live in ~/.tauri).
+*.key
+.idea/
+*.tsbuildinfo

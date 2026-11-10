@@ -1,0 +1,24 @@
+# Actions → Release → Run workflow. Needs the TAURI_SIGNING_PRIVATE_KEY secret (contents of ~/.tauri/switchgit.key).
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver version, e.g. 0.1.0"
+        required: true
+      notes:
+        description: "Release notes"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: HoangTrongPhi/Abyss/.github/workflows/release-tauri-app.yml@main
+    with:
+      version: ${{ inputs.version }}
+      notes: ${{ inputs.notes }}
+    secrets: inherit
