@@ -178,7 +178,10 @@ impl Config {
         account.email = account.email.trim().to_string();
         account.remotes = clean_list(&account.remotes);
         account.folders = clean_list(&account.folders);
-        account.username = account.username.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+        account.username = match account.username.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+            None => None,
+            Some(typed) => Some(login_of(typed).ok_or_else(|| CoreError::Input(format!("\"{typed}\" is not a sign-in name: type the login only, such as octocat")))?),
+        };
         account.ssh_key = account.ssh_key.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
         if !matches!(account.kind.as_str(), "work" | "personal" | "other") {
             account.kind = "other".into();
@@ -229,6 +232,26 @@ impl Config {
         self.bindings.retain(|_, v| v != id);
         self.accounts.len() != before
     }
+}
+
+/// The HTTPS sign-in name in `typed`, which may be pasted as a profile URL
+/// (`https://github.com/octocat/` → `octocat`). The credential manager looks up stored credentials by
+/// this exact name and saves new ones under the login the server returns, so anything but the bare
+/// login makes it ask to sign in on every fetch. `None` when no login can be read from it.
+pub fn login_of(typed: &str) -> Option<String> {
+    let typed = typed.trim();
+    let (had_scheme, rest) = match typed.split_once("://") {
+        Some((_, rest)) => (true, rest),
+        None => (false, typed),
+    };
+    let rest = rest.trim_matches('/');
+    let login = match rest.split_once('/') {
+        Some((_host, path)) => path.split('/').next().unwrap_or(""),
+        None if had_scheme => "",
+        None => rest,
+    };
+    let bad = login.is_empty() || login.contains(|c: char| c.is_whitespace() || matches!(c, '/' | '\\' | ':' | '"'));
+    (!bad).then(|| login.to_string())
 }
 
 /// True when `path` is `folder` or inside it (case-insensitive, either slash).
@@ -283,6 +306,31 @@ mod tests {
         let work = cfg.account("work").unwrap();
         assert_eq!((work.remotes.as_slice(), &work.username), (["github.com/MageTech".to_string()].as_slice(), &None));
         assert_eq!(cfg.account_by_email("Phi@MageTechCorp.com").map(|a| a.id.as_str()), Some("work"));
+
+        // A pasted profile URL is saved as the bare login; something with no login in it is refused.
+        let mut work = cfg.account("work").unwrap().clone();
+        work.username = Some(" https://github.com/phihoangmagetech/ ".into());
+        cfg.upsert(work.clone()).unwrap();
+        assert_eq!(cfg.account("work").unwrap().username.as_deref(), Some("phihoangmagetech"));
+        work.username = Some("https://github.com".into());
+        assert!(cfg.upsert(work).is_err(), "host without a login");
+    }
+
+    #[test]
+    fn login_of_reads_the_bare_login() {
+        for (typed, want) in [
+            ("octocat", Some("octocat")),
+            ("  phi-magetech ", Some("phi-magetech")),
+            ("https://github.com/HoangTrongPhi", Some("HoangTrongPhi")),
+            ("https://github.com/HoangTrongPhi/SwitchGit.git", Some("HoangTrongPhi")),
+            ("github.com/abh-tech/", Some("abh-tech")),
+            ("phi@magetechcorp.com", Some("phi@magetechcorp.com")),
+            ("https://github.com/", None),
+            ("two words", None),
+            ("", None),
+        ] {
+            assert_eq!(login_of(typed).as_deref(), want, "{typed}");
+        }
     }
 
     #[test]

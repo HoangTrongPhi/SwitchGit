@@ -80,12 +80,13 @@ fn quoted(value: &str) -> String {
 /// `accounts/<id>.gitconfig`.
 pub fn account_file_text(a: &Account) -> String {
     let mut s = format!("# SwitchGit account \"{}\" — written by SwitchGit, changes here are lost.\n[user]\n\tname = {}\n\temail = {}\n", a.label, quoted(&a.name), quoted(&a.email));
-    if let Some(user) = &a.username {
+    // Normalised here as well, so accounts saved before `login_of` existed are fixed on the next apply.
+    if let Some(user) = a.username.as_deref().and_then(super::model::login_of) {
         let mut hosts: Vec<String> = a.remotes.iter().filter_map(|r| remote::host_of(r)).collect();
         hosts.sort();
         hosts.dedup();
         for host in hosts {
-            s.push_str(&format!("[credential \"https://{host}\"]\n\tusername = {}\n", quoted(user)));
+            s.push_str(&format!("[credential \"https://{host}\"]\n\tusername = {}\n", quoted(&user)));
         }
     }
     if let Some(key) = &a.ssh_key {
@@ -434,6 +435,8 @@ mod tests {
         cfg.accounts[1].remotes.clear();
         let text = account_file_text(&cfg.accounts[0]);
         assert!(text.contains("[credential \"https://github.com\"]\n\tusername = \"phi-magetech\""));
+        let pasted = Account { username: Some("https://github.com/phi-magetech/".into()), ..cfg.accounts[0].clone() };
+        assert_eq!(account_file_text(&pasted), text, "a pasted profile URL writes the bare login");
         assert!(text.contains("sshCommand = \"ssh -i \\\"C:/Users/PC/.ssh/id_work\\\" -o IdentitiesOnly=yes\""));
 
         let r = apply(&cfg, &p, false).unwrap();
