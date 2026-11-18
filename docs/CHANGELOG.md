@@ -3,6 +3,9 @@
 All user-visible changes. Newest first; one section per released version.
 
 ## Unreleased
+- Fix: an HTTPS sign-in name pasted as a profile URL (`https://github.com/octocat`) made the
+  credential manager ask to sign in on every fetch. It is now saved and written as the bare login
+  (`octocat`), and accounts saved earlier are fixed on the next apply.
 
 ## 0.1.0 — 2026-11-10
 - Accounts with their own on/off switch, remotes, folders, HTTPS sign-in name and SSH key.
